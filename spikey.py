@@ -14,18 +14,20 @@ from data_sort import *
 
 numpy.random.seed(7)
 
-f1 = 'data/alphabet_02_19'
-f2 = 'data/alphabet_02_19_logkeys'
+f1 = 'data/alphabet_04_10'
+f2 = 'data/alphabet_04_10_logkeys'
+f3 = 'data/alphabet_02_19'
+f4 = 'data/alphabet_02_19_logkeys'
 
 # (x_train, y_train), (X_test, y_test) = imdb.load_data(num_words=5000)
 # print(y_train.size)
 # print(x_train.size)
 
 # accData entries look like [String time, String x, String y, String z]
-acc_entry_list = make_AccEntry_List(f1)
+acc_entry_list = make_AccEntry_List(f1) + make_AccEntry_List(f3)
 
 # lkData entries look like [String time, '>', String key]
-lk_entry_list = make_LKEntry_List(f2)
+lk_entry_list = make_LKEntry_List(f2) + make_LKEntry_List(f4)
 
 checkLs = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 classes = ['key_press','non_key_press']
@@ -96,7 +98,7 @@ embedding_vecor_length = 3
 model = Sequential()
 
 model.add(Reshape((20,3), input_shape=(input_shape,)))
-model.add(Dense(100,activation='relu'))
+model.add(Dense(300,activation='selu'))
 model.add(Flatten())
 model.add(Dense(num_classes,activation='softmax'))
 print(model.summary())
@@ -119,7 +121,7 @@ callbacks_list = [
 # model.add(Flatten())
 # model.add(Dense(100,activation='relu'))
 # model.add(Dense(y_train.size, activation='softmax'))
-model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 # print(model.summary())
 BATCH_SIZE = 20
 EPOCHS = 50
@@ -134,24 +136,24 @@ history = model.fit(x_train,
 
 
 
-plt.figure(figsize=(6, 4))
-plt.plot(history.history['acc'], 'r', label='Accuracy of training data')
-plt.plot(history.history['val_acc'], 'b', label='Accuracy of validation data')
-plt.plot(history.history['loss'], 'r--', label='Loss of training data')
-plt.plot(history.history['val_loss'], 'b--', label='Loss of validation data')
-plt.title('Model Accuracy and Loss')
-plt.ylabel('Accuracy and Loss')
-plt.xlabel('Training Epoch')
-plt.ylim(0)
-plt.legend()
-plt.show()
+#plt.figure(figsize=(6, 4))
+#plt.plot(history.history['acc'], 'r', label='Accuracy of training data')
+#plt.plot(history.history['val_acc'], 'b', label='Accuracy of validation data')
+#plt.plot(history.history['loss'], 'r--', label='Loss of training data')
+#plt.plot(history.history['val_loss'], 'b--', label='Loss of validation data')
+#plt.title('Model Accuracy and Loss')
+#plt.ylabel('Accuracy and Loss')
+#plt.xlabel('Training Epoch')
+#plt.ylim(0)
+#plt.legend()
+#plt.show()
 
-print(y_train[28:35])
-y_pred_train = model.predict(x_train)
+print(y_test[20:40])
+y_pred_train = model.predict(x_test)
 print(y_pred_train.shape)
-print(y_pred_train[28:35])
+print(y_pred_train[20:40])
 max_y_pred_train = np.argmax(y_pred_train, axis=1)
-print(classification_report(y_train, max_y_pred_train))
+print(classification_report(y_test, max_y_pred_train))
 
 # Final evaluation of the model
 #scores = model.evaluate(X_test, y_test, verbose=0)
