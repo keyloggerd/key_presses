@@ -19,31 +19,24 @@ f2 = 'data/alphabet_04_10_logkeys'
 f3 = 'data/alphabet_02_19'
 f4 = 'data/alphabet_02_19_logkeys'
 
-# (x_train, y_train), (X_test, y_test) = imdb.load_data(num_words=5000)
-# print(y_train.size)
-# print(x_train.size)
+acc_files = [f1]
+lk_files = [f2]
 
 # accData entries look like [String time, String x, String y, String z]
-acc_entry_list = make_AccEntry_List(f1) + make_AccEntry_List(f3)
+acc_entry_list = make_AccEntry_List(acc_files)
 
 # lkData entries look like [String time, '>', String key]
-lk_entry_list = make_LKEntry_List(f2) + make_LKEntry_List(f4)
+lk_entry_list = make_LKEntry_List(lk_files)
 
+# letters to look for
 checkLs = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-classes = ['key_press','non_key_press']
-# window_list = []
-# for letter in checkLs:
-    # key_presses = list(filter(lambda x: x.key == letter, lk_entry_list))
-    # for k in key_presses:
-        # cur_window = Window(letter, acc_entry_list, get_index_of_matching_time(acc_entry_list, k.time)).window
-        # cur_entry = []
-        # for acc_entry in cur_window:
-            # cur_entry.append(acc_entry.get_acceleration())
-        # window_list.append(cur_entry)
 
-#print(window_list)
+# how to classify the data
+classes = ['key_press','non_key_press']
+
 windows = make_window_dict(checkLs, acc_entry_list, lk_entry_list)
-add_non_keypress(windows,f1,split=True)
+
+add_non_keypress(windows,acc_files,split=True)
 
 time_output = []
 window_list = []
@@ -53,23 +46,18 @@ for key in windows:
         while (len(time_output) != 0) and i < len(time_output) and window.window[0].get_time() > time_output[i][0]:
             i += 1
         time_output.insert(i, (window.window[0].get_time(), 0 if key == 'none' else 1))
-        #window_list.insert(i,[])
         cur_entry = []
         for acc in window.window:
-            #window_list[i].append(acc.get_acceleration())
             cur_entry.append(acc.get_acceleration())
         window_list.insert(i,cur_entry)
 
 output = [item[1] for item in time_output]
+print(output)
 #window_list_r = [window.window for window in window_list]
 x_train = asarray(window_list[:int(len(window_list)/2)]).astype(np.float32)
 x_test = asarray(window_list[int(len(window_list)/2):]).astype(np.float32)
 y_train = asarray(output[:int(len(output)/2)])
 y_test = asarray(output[int(len(output)/2):])
-
-#x_train = to_categorical(x_train)
-#x_test = to_categorical(window_array_test, 10)
-#y_train = to_categorical(y_train,10)
 
 print('x_train shape:', x_train.shape)
 print('y_train shape:', y_train.shape)
@@ -103,8 +91,6 @@ model.add(Flatten())
 model.add(Dense(num_classes,activation='softmax'))
 print(model.summary())
 
-# model.add(Conv1D(filters=1, kernel_size=20, activation ='relu', input_shape=(x_train.shape[1],3)))
-
 callbacks_list = [
     keras.callbacks.ModelCheckpoint(
         filepath='best_model.{epoch:02d}-{val_loss:.2f}.h5',
@@ -112,15 +98,6 @@ callbacks_list = [
     keras.callbacks.EarlyStopping(monitor='acc', patience=1)
 ]
 
-# model.add(Embedding(93, embedding_vecor_length, input_length=20))
-# model.add(Embedding(93, embedding_vecor_length, input_length=20))
-# model.add(Dropout(0.2))
-#model.add(LSTM(100))
-#model.add(Dropout(0.2))
-# model.add(MaxPooling1D(pool_size=1))
-# model.add(Flatten())
-# model.add(Dense(100,activation='relu'))
-# model.add(Dense(y_train.size, activation='softmax'))
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 # print(model.summary())
 BATCH_SIZE = 20
@@ -136,24 +113,48 @@ history = model.fit(x_train,
 
 
 
-#plt.figure(figsize=(6, 4))
-#plt.plot(history.history['acc'], 'r', label='Accuracy of training data')
-#plt.plot(history.history['val_acc'], 'b', label='Accuracy of validation data')
-#plt.plot(history.history['loss'], 'r--', label='Loss of training data')
-#plt.plot(history.history['val_loss'], 'b--', label='Loss of validation data')
-#plt.title('Model Accuracy and Loss')
-#plt.ylabel('Accuracy and Loss')
-#plt.xlabel('Training Epoch')
-#plt.ylim(0)
-#plt.legend()
-#plt.show()
+# plt.figure(figsize=(6, 4))
+# plt.plot(history.history['acc'], 'r', label='Accuracy of training data')
+# plt.plot(history.history['val_acc'], 'b', label='Accuracy of validation data')
+# plt.plot(history.history['loss'], 'r--', label='Loss of training data')
+# plt.plot(history.history['val_loss'], 'b--', label='Loss of validation data')
+# plt.title('Model Accuracy and Loss')
+# plt.ylabel('Accuracy and Loss')
+# plt.xlabel('Training Epoch')
+# plt.ylim(0)
+# plt.legend()
+# plt.show()
 
-print(y_test[20:40])
+# print(y_test[20:40])
 y_pred_train = model.predict(x_test)
 print(y_pred_train.shape)
-print(y_pred_train[20:40])
+# print(y_pred_train[20:40])
+for i in range(20,40):
+    print("actual: " + str(y_test[i]) + ", predicted: " + str(y_pred_train[i]))
 max_y_pred_train = np.argmax(y_pred_train, axis=1)
 print(classification_report(y_test, max_y_pred_train))
+
+
+c1 = 0
+c0 = 0
+fp = 0
+fn = 0
+
+for k in range(y_test.size):
+    if(y_test[k] == 1):
+        if(y_pred_train[k][1] > .5):
+            c1 += 1
+        else:
+            fn += 1
+    else:
+        if(y_pred_train[k][1] > .5):
+            fp += 1
+        else:
+            c0 += 1
+print("c1 = ", c1)
+print("c0 = ", c0)
+print("fp = ", fp)
+print("fn = ", fn)
 
 # Final evaluation of the model
 #scores = model.evaluate(X_test, y_test, verbose=0)
